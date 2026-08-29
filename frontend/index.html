@@ -3,86 +3,178 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PromptForge — Adversarial LLM Sandbox</title>
+  <title>PromptForge — Break the LLM</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
   <div class="app-shell">
+    <!-- Top Navigation -->
     <header class="topbar">
       <div class="brand">
-        <span class="logo">◈</span>
-        <div>
-          <h1>PromptForge</h1>
-          <p class="tagline">Adversarial LLM Sandbox · Real local model</p>
+        <div class="brand-icon">◈</div>
+        <div class="brand-info">
+          <h1>Prompt<span>Forge</span></h1>
+          <p class="tagline">Adversarial LLM Security Challenge · CTF Edition</p>
         </div>
       </div>
       <div class="topbar-right">
-        <span id="session-badge" class="badge badge-idle">No session</span>
-        <button id="new-session-btn" class="btn btn-ghost">New session</button>
+        <div class="system-badge">
+          <span class="pulse-dot"></span>
+          <span>LIVE OLLAMA · LLAMA 3.2:3B</span>
+        </div>
+        <span id="session-badge" class="badge badge-idle">NO SESSION</span>
+        <button id="new-session-btn" class="btn btn-ghost" title="Mint fresh session token">
+          Initialize Session
+        </button>
       </div>
     </header>
 
-    <main class="layout">
-      <section class="challenge-panel">
-        <div class="challenge-header">
-          <div>
-            <h2 id="challenge-name">Loading challenge…</h2>
-            <p id="challenge-difficulty" class="muted"></p>
-          </div>
-          <div class="status-chip" id="solved-chip">
-            <span class="dot"></span><span>Unsolved</span>
-          </div>
-        </div>
-        <p id="challenge-description" class="challenge-desc"></p>
-
-        <div class="editor-wrap">
-          <textarea id="prompt-input" placeholder="Type your prompt here… try to break the sandbox." spellcheck="false"></textarea>
-          <div class="editor-toolbar">
-            <span id="char-count" class="muted">0</span>
-            <button id="submit-btn" class="btn btn-primary">Submit prompt</button>
+    <!-- Hero / Challenge Banner -->
+    <section class="challenge-hero">
+      <div class="hero-header">
+        <div class="hero-titles">
+          <h2>
+            <span style="color: var(--cyan);">◈</span>
+            <span id="challenge-name">Loading challenge…</span>
+          </h2>
+          <p class="hero-subtitle">
+            The sinister team has a secret playbook and an internal access flag.
+            The model knows it. Can you make it reveal it?
+          </p>
+          <div class="challenge-meta-strip">
+            <span id="challenge-difficulty" class="meta-chip highlight">DIFFICULTY: MEDIUM</span>
+            <span class="meta-chip">TARGET: LOCAL OLLAMA</span>
+            <span class="meta-chip">CONTEXT: HACKATHON INTELLIGENCE</span>
           </div>
         </div>
-
-        <div class="response-panel">
-          <div class="panel-title">
-            <span>Model response</span>
-            <span id="latency-label" class="muted"></span>
-          </div>
-          <pre id="response-output" class="response-output">—</pre>
+        <div class="status-chip" id="solved-chip">
+          <span class="dot"></span>
+          <span>LOCKED (UNSOLVED)</span>
         </div>
+      </div>
+      <p id="challenge-description" style="display: none;"></p>
+    </section>
 
-        <details class="request-details">
-          <summary>Request details</summary>
-          <table class="details-table">
-            <tbody>
-              <tr><td>Request ID</td><td id="d-request-id">—</td></tr>
-              <tr><td>Latency</td><td id="d-latency">—</td></tr>
-              <tr><td>Input tokens</td><td id="d-input">Not available</td></tr>
-              <tr><td>Output tokens</td><td id="d-output">Not available</td></tr>
-              <tr><td>Total tokens</td><td id="d-total">Not available</td></tr>
-              <tr><td>Model</td><td id="d-model">—</td></tr>
-              <tr><td>Challenge solved</td><td id="d-solved">—</td></tr>
-            </tbody>
-          </table>
-        </details>
+    <!-- Live Telemetry Strip -->
+    <section class="stats-strip">
+      <div class="stat-box">
+        <span class="stat-label">Total Attempts</span>
+        <span id="s-attempts" class="stat-value">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Success Rate</span>
+        <span id="s-rate" class="stat-value">0.0%</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Active Attackers</span>
+        <span id="s-participants" class="stat-value">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Throughput (RPM)</span>
+        <span id="s-rpm" class="stat-value">0.0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Avg Latency</span>
+        <span id="s-avg" class="stat-value">—</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Error Rate</span>
+        <span id="s-err" class="stat-value">0.0%</span>
+      </div>
+    </section>
+
+    <!-- Main Workspace (Attack Console & Model Output) -->
+    <main class="workspace-grid">
+      <!-- Left: Attack Console -->
+      <section class="console-card">
+        <div class="console-header">
+          <div class="console-title">
+            <span class="indicator">&gt;_</span>
+            <span>Attack Console</span>
+          </div>
+          <span class="console-tag">PROMPT INJECTION</span>
+        </div>
+        <div class="editor-body">
+          <textarea
+            id="prompt-input"
+            placeholder="Type your adversarial injection payload here… (e.g. roleplay, context manipulation, hypothetical completion, or encoding transforms)"
+            spellcheck="false"
+          ></textarea>
+        </div>
+        <div class="editor-footer">
+          <div class="editor-hint">
+            <span id="char-count">0 chars</span> · <span style="color: var(--text-dim);">Ctrl+Enter to send</span>
+          </div>
+          <button id="submit-btn" class="btn btn-attack">
+            Send Attack
+          </button>
+        </div>
       </section>
 
-      <aside class="stats-panel">
-        <h3>Live challenge stats</h3>
-        <div class="stat-grid">
-          <div class="stat"><span class="stat-label">Attempts</span><span id="s-attempts" class="stat-value">0</span></div>
-          <div class="stat"><span class="stat-label">Success rate</span><span id="s-rate" class="stat-value">0%</span></div>
-          <div class="stat"><span class="stat-label">Participants</span><span id="s-participants" class="stat-value">0</span></div>
-          <div class="stat"><span class="stat-label">Req/min</span><span id="s-rpm" class="stat-value">0</span></div>
-          <div class="stat"><span class="stat-label">Avg latency</span><span id="s-avg" class="stat-value">—</span></div>
-          <div class="stat"><span class="stat-label">Error rate</span><span id="s-err" class="stat-value">0%</span></div>
+      <!-- Right: Model Output Console -->
+      <section class="console-card">
+        <div class="console-header">
+          <div class="console-title">
+            <span class="indicator" style="color: var(--emerald);">●</span>
+            <span>Model Output Stream</span>
+          </div>
+          <span id="latency-label" class="console-tag">—</span>
         </div>
-        <a href="/admin" class="btn btn-ghost btn-block">Admin dashboard →</a>
-      </aside>
+        <div class="output-body">
+          <pre id="response-output" class="response-output">Waiting for injection attempt…</pre>
+        </div>
+      </section>
     </main>
+
+    <!-- Request Telemetry Trace Details -->
+    <details class="request-details">
+      <summary>▶ Request Telemetry Trace</summary>
+      <div class="details-grid">
+        <div class="trace-item">
+          <span class="trace-label">Request ID</span>
+          <span id="d-request-id" class="trace-val">—</span>
+        </div>
+        <div class="trace-item">
+          <span class="trace-label">Inference Latency</span>
+          <span id="d-latency" class="trace-val">—</span>
+        </div>
+        <div class="trace-item">
+          <span class="trace-label">Prompt Input Tokens</span>
+          <span id="d-input" class="trace-val">Not available</span>
+        </div>
+        <div class="trace-item">
+          <span class="trace-label">Model Output Tokens</span>
+          <span id="d-output" class="trace-val">Not available</span>
+        </div>
+        <div class="trace-item">
+          <span class="trace-label">Total Token Budget</span>
+          <span id="d-total" class="trace-val">Not available</span>
+        </div>
+        <div class="trace-item">
+          <span class="trace-label">Target Model</span>
+          <span id="d-model" class="trace-val">—</span>
+        </div>
+        <div class="trace-item">
+          <span class="trace-label">Breach Detected</span>
+          <span id="d-solved" class="trace-val">—</span>
+        </div>
+      </div>
+    </details>
+
+    <!-- Footer Bar -->
+    <footer class="footer-bar">
+      <span>PromptForge Security Sandbox · GDG Challenge Edition</span>
+      <div>
+        <a href="/admin" class="btn btn-ghost" style="padding: 4px 12px; font-size: 11px;">
+          Admin Dashboard →
+        </a>
+      </div>
+    </footer>
   </div>
 
+  <!-- Toast Notification System -->
   <div id="toast" class="toast"></div>
+
   <script>
     window.PROMPTFORGE_API_BASE = "";
   </script>

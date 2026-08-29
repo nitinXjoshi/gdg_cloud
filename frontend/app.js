@@ -11,7 +11,7 @@ function toast(message, type = "") {
   const el = $("#toast");
   el.textContent = message;
   el.className = "toast show " + type;
-  setTimeout(() => (el.className = "toast"), 3200);
+  setTimeout(() => (el.className = "toast"), 3500);
 }
 
 async function api(path, options = {}) {
@@ -33,9 +33,9 @@ async function createSession() {
   const res = await api("/api/v1/auth/session", { method: "POST", body: "{}" });
   state.token = res.api_token;
   localStorage.setItem("promptforge_token", res.api_token);
-  $("#session-badge").textContent = "Session active";
+  $("#session-badge").textContent = "SESSION ACTIVE";
   $("#session-badge").className = "badge badge-active";
-  toast("New session created", "success");
+  toast("Attacker session initialized", "success");
 }
 
 async function loadChallenge() {
@@ -44,8 +44,10 @@ async function loadChallenge() {
   const c = challenges[0];
   state.challengeId = c.challenge_id;
   $("#challenge-name").textContent = c.name;
-  $("#challenge-difficulty").textContent = `${c.difficulty.toUpperCase()} · ${c.model}`;
-  $("#challenge-description").textContent = c.description;
+  $("#challenge-difficulty").textContent = `DIFFICULTY: ${c.difficulty.toUpperCase()} · ${c.model.toUpperCase()}`;
+  if ($("#challenge-description")) {
+    $("#challenge-description").textContent = c.description;
+  }
 }
 
 function fmtIntOrNA(value) {
@@ -55,11 +57,11 @@ function fmtIntOrNA(value) {
 async function loadStats() {
   try {
     const s = await api("/api/v1/stats");
-    $("#s-attempts").textContent = s.total_attempts;
+    $("#s-attempts").textContent = fmtIntOrNA(s.total_attempts);
     $("#s-rate").textContent = `${(s.success_rate * 100).toFixed(1)}%`;
-    $("#s-participants").textContent = s.active_participants;
-    $("#s-rpm").textContent = s.requests_per_minute;
-    $("#s-avg").textContent = `${s.avg_latency_ms}ms`;
+    $("#s-participants").textContent = fmtIntOrNA(s.active_participants);
+    $("#s-rpm").textContent = s.requests_per_minute.toFixed(1);
+    $("#s-avg").textContent = s.avg_latency_ms ? `${s.avg_latency_ms.toFixed(0)} ms` : "—";
     $("#s-err").textContent = `${(s.error_rate * 100).toFixed(1)}%`;
   } catch (_) {}
 }
@@ -67,15 +69,15 @@ async function loadStats() {
 async function submitPrompt() {
   const input = $("#prompt-input");
   const prompt = input.value.trim();
-  if (!prompt) return toast("Prompt cannot be empty", "error");
+  if (!prompt) return toast("Attack payload cannot be empty", "error");
   if (!state.token) {
-    toast("Create a session first", "error");
+    toast("Initialize an attacker session first", "error");
     return;
   }
 
   const btn = $("#submit-btn");
   btn.disabled = true;
-  btn.textContent = "Running…";
+  btn.textContent = "Executing Attack…";
 
   try {
     const res = await api(`/api/v1/challenges/${state.challengeId}/attempt`, {
@@ -85,17 +87,17 @@ async function submitPrompt() {
 
     $("#response-output").textContent = res.response || "(empty response)";
     $("#response-output").classList.toggle("solved", res.challenge_solved);
-    $("#latency-label").textContent = `${res.latency_ms} ms`;
+    $("#latency-label").textContent = `Inference: ${res.latency_ms.toFixed(0)} ms`;
 
     const solvedChip = $("#solved-chip");
     if (res.challenge_solved) {
       solvedChip.classList.add("solved");
-      solvedChip.innerHTML = '<span class="dot"></span><span>Solved</span>';
-      toast("Flag extracted — challenge solved!", "success");
+      solvedChip.innerHTML = '<span class="dot"></span><span>BREACH CONFIRMED</span>';
+      toast("FLAG EXTRACTED — BREACH CONFIRMED!", "success");
     }
 
     $("#d-request-id").textContent = res.request_id;
-    $("#d-latency").textContent = `${res.latency_ms} ms`;
+    $("#d-latency").textContent = `${res.latency_ms.toFixed(1)} ms`;
 
     const usage = res.usage || {};
     if (usage.available) {
@@ -109,14 +111,14 @@ async function submitPrompt() {
     }
 
     $("#d-model").textContent = res.model || "—";
-    $("#d-solved").textContent = res.challenge_solved ? "Yes" : "No";
+    $("#d-solved").textContent = res.challenge_solved ? "YES (Breach Confirmed)" : "NO";
 
     loadStats();
   } catch (err) {
     toast(err.message, "error");
   } finally {
     btn.disabled = false;
-    btn.textContent = "Submit prompt";
+    btn.textContent = "Send Attack";
   }
 }
 
@@ -124,7 +126,7 @@ $("#new-session-btn").addEventListener("click", () => {
   localStorage.removeItem("promptforge_token");
   state.token = null;
   $("#solved-chip").classList.remove("solved");
-  $("#solved-chip").innerHTML = '<span class="dot"></span><span>Unsolved</span>';
+  $("#solved-chip").innerHTML = '<span class="dot"></span><span>LOCKED (UNSOLVED)</span>';
   createSession();
 });
 
@@ -139,7 +141,7 @@ $("#prompt-input").addEventListener("keydown", (e) => {
 (async function init() {
   try {
     if (state.token) {
-      $("#session-badge").textContent = "Session active";
+      $("#session-badge").textContent = "SESSION ACTIVE";
       $("#session-badge").className = "badge badge-active";
     }
     await loadChallenge();
