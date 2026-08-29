@@ -96,9 +96,10 @@ async function loadChallenge() {
   state.challengeId = c.challenge_id;
   $("#challenge-name").textContent = c.name;
   $("#challenge-difficulty").textContent = `DIFFICULTY: ${c.difficulty.toUpperCase()} · ${c.model.toUpperCase()}`;
-  if ($("#challenge-description")) {
-    $("#challenge-description").textContent = c.description;
-    $("#challenge-description").style.display = "none";
+  const descEl = $("#challenge-description");
+  if (descEl) {
+    descEl.textContent = c.description;
+    if (descEl.style) descEl.style.display = "none";
   }
 }
 
@@ -181,8 +182,11 @@ async function submitPrompt() {
 $("#new-session-btn").addEventListener("click", () => {
   localStorage.removeItem("promptforge_token");
   state.token = null;
-  $("#solved-chip").classList.remove("solved");
-  $("#solved-chip").innerHTML = '<span class="dot"></span><span>LOCKED (UNSOLVED)</span>';
+  const chip = $("#solved-chip");
+  if (chip) {
+    if (chip.classList) chip.classList.remove("solved");
+    chip.innerHTML = '<span class="dot"></span><span>LOCKED (UNSOLVED)</span>';
+  }
   createSession();
 });
 
@@ -208,8 +212,10 @@ $("#prompt-input").addEventListener("keydown", (e) => {
     $("#challenge-difficulty").textContent = `TARGET: UNREACHABLE · ${targetEndpoint}`;
     const descEl = $("#challenge-description");
     if (descEl) {
-      descEl.style.display = "block";
-      descEl.style.color = "var(--crimson, #ff4b4b)";
+      if (descEl.style) {
+        descEl.style.display = "block";
+        descEl.style.color = "var(--crimson, #ff4b4b)";
+      }
       descEl.textContent = `Backend endpoint at ${targetEndpoint} is not currently reachable (${err.message}). Set window.PROMPTFORGE_API_BASE or visit with ?api=<public-backend-url> to connect to a live backend.`;
     }
     toast(`Backend unavailable: ${err.message}`, "error");
