@@ -419,7 +419,43 @@ PromptForge uses a split architecture for deployment:
      - The **API** configuration button in the top navigation bar.
      - Global override: `window.PROMPTFORGE_API_BASE`.
    - **Connection Diagnostics**: If no public backend is configured, the deployed frontend cleanly reports that the backend endpoint is offline and provides connection instructions rather than failing silently or hanging indefinitely.
-4. **CORS Configuration**: The backend explicitly allows origins configured via `CORS_ORIGINS`, defaulting to `http://localhost:5173,http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000,https://gdg-cloud.vercel.app`.
+4. **CORS Configuration**: The backend explicitly allows origins configured via `CORS_ORIGINS`, defaulting to `http://localhost:5173,http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000,https://gdg-cloud.vercel.app` (and regex matching all `*.vercel.app` deployments).
+
+### Connecting the Vercel Frontend to Your Local Backend (Live Demo Flow)
+
+Ollama and the FastAPI backend run locally on your machine. To connect the production Vercel frontend ([https://gdg-cloud.vercel.app](https://gdg-cloud.vercel.app)) to your local environment for live demonstrations:
+
+1. **Start Ollama locally**:
+   ```bash
+   ollama serve
+   ollama pull llama3.2:3b
+   ```
+
+2. **Start FastAPI locally**:
+   ```bash
+   cd backend
+   source .venv/bin/activate
+   uvicorn app.main:app --port 8000
+   ```
+
+3. **Expose FastAPI using a public tunnel**:
+   Using Cloudflare Tunnel (free, no account required for quick tunnels):
+   ```bash
+   cloudflared tunnel --url http://localhost:8000
+   ```
+   *Or using ngrok:*
+   ```bash
+   ngrok http 8000
+   ```
+
+4. **Open the Vercel frontend using the public backend URL**:
+   Take the generated public HTTPS URL (e.g. `https://my-demo-tunnel.trycloudflare.com`) and open:
+   ```
+   https://gdg-cloud.vercel.app/?api=https://my-demo-tunnel.trycloudflare.com
+   ```
+   *(You can also open [https://gdg-cloud.vercel.app](https://gdg-cloud.vercel.app) and click the **API** button in the top navigation bar to enter the backend URL directly.)*
+
+> **Note on Ollama**: Ollama (`localhost:11434`) remains entirely local on your machine. The Vercel frontend never communicates with Ollama directly; it sends requests through the public backend tunnel to FastAPI, which queries the local Ollama instance.
 
 ---
 

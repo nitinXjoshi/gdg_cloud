@@ -32,7 +32,8 @@ function getApiBase() {
     return "http://localhost:8000";
   }
 
-  return "";
+  // Deployed host without configured backend: do not call Vercel origin!
+  return null;
 }
 
 let API_BASE = getApiBase();
@@ -40,12 +41,12 @@ let API_BASE = getApiBase();
 function updateApiEndpointUI() {
   const label = $("#api-endpoint-label");
   if (!label) return;
+  if (API_BASE === null) {
+    label.textContent = "Not Configured";
+    return;
+  }
   if (!API_BASE) {
-    const isLocal =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname === "0.0.0.0";
-    label.textContent = isLocal ? "Localhost (8000)" : "Default (Relative)";
+    label.textContent = "Localhost:8000";
   } else {
     try {
       const u = new URL(API_BASE);
@@ -71,6 +72,9 @@ function toast(message, type = "") {
 }
 
 async function api(path, options = {}) {
+  if (API_BASE === null) {
+    throw new Error("Backend endpoint not configured");
+  }
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (state.token) headers["Authorization"] = `Bearer ${state.token}`;
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
@@ -86,6 +90,10 @@ async function api(path, options = {}) {
 }
 
 async function createSession() {
+  if (API_BASE === null) {
+    toast("Backend endpoint not configured. Set your public backend URL via ?api=<URL> or the API button above.", "error");
+    return;
+  }
   const btn = $("#new-session-btn");
   btn.disabled = true;
   btn.textContent = "Connecting…";
@@ -142,6 +150,10 @@ async function submitPrompt() {
   const input = $("#prompt-input");
   const prompt = input.value.trim();
   if (!prompt) return toast("Attack payload cannot be empty", "error");
+  if (API_BASE === null) {
+    toast("Backend endpoint not configured. Click the API button above to set your backend URL.", "error");
+    return;
+  }
   if (!state.token) {
     toast("Initialize an attacker session first", "error");
     return;
@@ -241,6 +253,28 @@ if (apiBtn) {
 
 async function init() {
   updateApiEndpointUI();
+
+  if (API_BASE === null) {
+    const badge = $("#system-badge");
+    const statusText = $("#system-status-text");
+    if (badge && statusText) {
+      badge.className = "system-badge badge-warning";
+      statusText.textContent = "NO BACKEND CONFIGURED";
+    }
+    $("#challenge-name").textContent = "Backend endpoint not configured";
+    $("#challenge-difficulty").textContent = "TARGET: NO BACKEND CONFIGURED";
+    const descEl = $("#challenge-description");
+    if (descEl) {
+      if (descEl.style) {
+        descEl.style.display = "block";
+        descEl.style.color = "var(--amber, #f59e0b)";
+      }
+      descEl.textContent =
+        "Backend endpoint not configured. Expose your local FastAPI backend with a public tunnel (e.g. cloudflared tunnel --url http://localhost:8000), then open this page with ?api=<PUBLIC-BACKEND-URL> or click the 'API' button above.";
+    }
+    return;
+  }
+
   try {
     if (state.token) {
       $("#session-badge").textContent = "SESSION ACTIVE";
@@ -277,14 +311,14 @@ async function init() {
       descEl.style.display = "none";
     }
   } catch (err) {
-    const targetEndpoint = API_BASE || window.location.origin;
+    const targetEndpoint = API_BASE || "Localhost:8000";
     const badge = $("#system-badge");
     const statusText = $("#system-status-text");
     if (badge && statusText) {
       badge.className = "system-badge badge-offline";
       statusText.textContent = "BACKEND DISCONNECTED";
     }
-    $("#challenge-name").textContent = "Backend Offline / Unreachable";
+    $("#challenge-name").textContent = "Backend Connection Error";
     $("#challenge-difficulty").textContent = `TARGET: UNREACHABLE · ${targetEndpoint}`;
     const descEl = $("#challenge-description");
     if (descEl) {
@@ -292,9 +326,9 @@ async function init() {
         descEl.style.display = "block";
         descEl.style.color = "var(--crimson, #ff4b4b)";
       }
-      descEl.textContent = `Backend endpoint at ${targetEndpoint} is not currently reachable (${err.message}). Set window.PROMPTFORGE_API_BASE, visit with ?api=<public-backend-url>, or click the API button above to configure.`;
+      descEl.textContent = `Could not connect to backend at ${targetEndpoint} (${err.message}). Ensure your local FastAPI server and public tunnel are running and CORS allows https://gdg-cloud.vercel.app.`;
     }
-    toast(`Backend unavailable: ${err.message}`, "error");
+    toast(`Backend connection error: ${err.message}`, "error");
   }
 }
 

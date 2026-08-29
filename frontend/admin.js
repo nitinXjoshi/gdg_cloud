@@ -32,7 +32,8 @@ function getApiBase() {
     return "http://localhost:8000";
   }
 
-  return "";
+  // Deployed host without configured backend: do not call Vercel origin!
+  return null;
 }
 
 let API_BASE = getApiBase();
@@ -40,12 +41,12 @@ let API_BASE = getApiBase();
 function updateApiEndpointUI() {
   const label = $("#api-endpoint-label");
   if (!label) return;
+  if (API_BASE === null) {
+    label.textContent = "Not Configured";
+    return;
+  }
   if (!API_BASE) {
-    const isLocal =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname === "0.0.0.0";
-    label.textContent = isLocal ? "Localhost (8000)" : "Default (Relative)";
+    label.textContent = "Localhost:8000";
   } else {
     try {
       const u = new URL(API_BASE);
@@ -67,6 +68,9 @@ function toast(message, type = "") {
 }
 
 async function api(path, options = {}) {
+  if (API_BASE === null) {
+    throw new Error("Backend endpoint not configured");
+  }
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (adminKey) headers["X-Admin-Key"] = adminKey;
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
@@ -89,6 +93,9 @@ function setPill(id, value) {
 }
 
 function authenticate() {
+  if (API_BASE === null) {
+    return toast("Backend endpoint not configured. Set your public backend URL via ?api=<URL> or the API button above.", "error");
+  }
   adminKey = $("#admin-key").value.trim();
   if (!adminKey) return toast("Enter the admin API key", "error");
   localStorage.setItem("promptforge_admin_key", adminKey);
@@ -205,7 +212,7 @@ $("#admin-key").addEventListener("keydown", (e) => {
   if (e.key === "Enter") authenticate();
 });
 
-if (adminKey) {
+if (adminKey && API_BASE !== null) {
   $("#admin-key").value = adminKey;
   loadAll().catch(() => toast("Invalid or expired admin key", "error"));
 }

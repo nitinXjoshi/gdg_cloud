@@ -13,7 +13,7 @@ _SECURITY_HEADERS = {
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline'; "
-        "connect-src 'self' http://localhost:* http://127.0.0.1:*; "
+        "connect-src 'self' http://localhost:* http://127.0.0.1:* https:; "
         "img-src 'self' data:; "
         "frame-ancestors 'none'"
     ),
@@ -32,6 +32,7 @@ def configure_cors(app: FastAPI, allowed_origins: list[str]) -> None:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins or ["http://localhost:5173"],
+        allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
