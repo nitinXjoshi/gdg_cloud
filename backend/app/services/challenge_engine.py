@@ -91,6 +91,7 @@ class AttemptResult:
     estimated_cost_cents: float
     model: str
     provider: str
+    confidentiality_breach: bool = False
     error: str | None = None
 
 
@@ -167,6 +168,7 @@ class ChallengeEngine:
                 request_id=str(uuid.uuid4()),
                 response="",
                 challenge_solved=False,
+                confidentiality_breach=False,
                 latency_ms=latency_ms,
                 usage_available=False,
                 input_tokens=None,
@@ -180,6 +182,7 @@ class ChallengeEngine:
 
         response_text = llm_response.text
         solved = detector.detect(response_text)
+        confidential_breach = detector.detect_confidential_leak(response_text)
 
         usage = llm_response.usage
         input_tokens = usage.input_tokens if usage and usage.available else None
@@ -190,6 +193,7 @@ class ChallengeEngine:
             request_id=str(uuid.uuid4()),
             response=response_text,
             challenge_solved=solved,
+            confidentiality_breach=confidential_breach,
             latency_ms=latency_ms,
             usage_available=bool(usage and usage.available),
             input_tokens=input_tokens,

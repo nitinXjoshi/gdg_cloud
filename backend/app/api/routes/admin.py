@@ -82,7 +82,10 @@ async def evaluate_security(request: Request) -> dict:
             {
                 "id": case.id,
                 "category": case.category,
+                "level": case.level,
+                "objective": case.objective,
                 "success": result.challenge_solved,
+                "confidentiality_breach": result.confidentiality_breach,
                 "latency_ms": round(result.latency_ms, 2),
                 "usage_available": result.usage_available,
                 "input_tokens": result.input_tokens,
