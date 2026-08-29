@@ -57,7 +57,7 @@ class Settings(BaseSettings):
 
     # --- Misc ---
     store_prompts: bool = False
-    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    cors_origins: str = "http://localhost:5173,http://localhost:3000,https://gdg-cloud.vercel.app"
 
     @field_validator("admin_api_key", mode="before")
     @classmethod

@@ -1,4 +1,41 @@
-const API_BASE = typeof window.PROMPTFORGE_API_BASE === "string" ? window.PROMPTFORGE_API_BASE : "";
+function getApiBase() {
+  if (typeof window.PROMPTFORGE_API_BASE === "string" && window.PROMPTFORGE_API_BASE.trim() !== "") {
+    return window.PROMPTFORGE_API_BASE.trim().replace(/\/+$/, "");
+  }
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const apiParam = params.get("api");
+    if (apiParam) {
+      const clean = apiParam.trim().replace(/\/+$/, "");
+      localStorage.setItem("promptforge_api_base", clean);
+      return clean;
+    }
+  } catch (_) {}
+
+  try {
+    const stored = localStorage.getItem("promptforge_api_base");
+    if (stored && stored.trim() !== "") {
+      return stored.trim().replace(/\/+$/, "");
+    }
+  } catch (_) {}
+
+  const isLocal =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "0.0.0.0";
+
+  if (isLocal) {
+    if (window.location.port === "8000") {
+      return "";
+    }
+    return "http://localhost:8000";
+  }
+
+  return "";
+}
+
+const API_BASE = getApiBase();
 
 const $ = (sel) => document.querySelector(sel);
 let adminKey = localStorage.getItem("promptforge_admin_key") || "";
@@ -36,7 +73,9 @@ function authenticate() {
   adminKey = $("#admin-key").value.trim();
   if (!adminKey) return toast("Enter the admin API key", "error");
   localStorage.setItem("promptforge_admin_key", adminKey);
-  loadAll().then(() => toast("Authenticated", "success"));
+  loadAll()
+    .then(() => toast("Authenticated", "success"))
+    .catch((err) => toast(`Admin connection failed: ${err.message}`, "error"));
 }
 
 async function loadSystemStatus() {

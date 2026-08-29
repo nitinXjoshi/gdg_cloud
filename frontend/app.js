@@ -1,4 +1,41 @@
-const API_BASE = typeof window.PROMPTFORGE_API_BASE === "string" ? window.PROMPTFORGE_API_BASE : "";
+function getApiBase() {
+  if (typeof window.PROMPTFORGE_API_BASE === "string" && window.PROMPTFORGE_API_BASE.trim() !== "") {
+    return window.PROMPTFORGE_API_BASE.trim().replace(/\/+$/, "");
+  }
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const apiParam = params.get("api");
+    if (apiParam) {
+      const clean = apiParam.trim().replace(/\/+$/, "");
+      localStorage.setItem("promptforge_api_base", clean);
+      return clean;
+    }
+  } catch (_) {}
+
+  try {
+    const stored = localStorage.getItem("promptforge_api_base");
+    if (stored && stored.trim() !== "") {
+      return stored.trim().replace(/\/+$/, "");
+    }
+  } catch (_) {}
+
+  const isLocal =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "0.0.0.0";
+
+  if (isLocal) {
+    if (window.location.port === "8000") {
+      return "";
+    }
+    return "http://localhost:8000";
+  }
+
+  return "";
+}
+
+const API_BASE = getApiBase();
 
 const state = {
   token: localStorage.getItem("promptforge_token") || null,
@@ -30,23 +67,38 @@ async function api(path, options = {}) {
 }
 
 async function createSession() {
-  const res = await api("/api/v1/auth/session", { method: "POST", body: "{}" });
-  state.token = res.api_token;
-  localStorage.setItem("promptforge_token", res.api_token);
-  $("#session-badge").textContent = "SESSION ACTIVE";
-  $("#session-badge").className = "badge badge-active";
-  toast("Attacker session initialized", "success");
+  const btn = $("#new-session-btn");
+  btn.disabled = true;
+  btn.textContent = "Connecting…";
+  try {
+    const res = await api("/api/v1/auth/session", { method: "POST", body: "{}" });
+    state.token = res.api_token;
+    localStorage.setItem("promptforge_token", res.api_token);
+    $("#session-badge").textContent = "SESSION ACTIVE";
+    $("#session-badge").className = "badge badge-active";
+    toast("Attacker session initialized", "success");
+  } catch (err) {
+    $("#session-badge").textContent = "SESSION FAILED";
+    $("#session-badge").className = "badge badge-idle";
+    toast(`Session initialization failed: ${err.message}`, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Initialize Session";
+  }
 }
 
 async function loadChallenge() {
   const challenges = await api("/api/v1/challenges");
-  if (!challenges.length) return;
+  if (!challenges || !challenges.length) {
+    throw new Error("No active challenges found");
+  }
   const c = challenges[0];
   state.challengeId = c.challenge_id;
   $("#challenge-name").textContent = c.name;
   $("#challenge-difficulty").textContent = `DIFFICULTY: ${c.difficulty.toUpperCase()} · ${c.model.toUpperCase()}`;
   if ($("#challenge-description")) {
     $("#challenge-description").textContent = c.description;
+    $("#challenge-description").style.display = "none";
   }
 }
 
@@ -72,6 +124,10 @@ async function submitPrompt() {
   if (!prompt) return toast("Attack payload cannot be empty", "error");
   if (!state.token) {
     toast("Initialize an attacker session first", "error");
+    return;
+  }
+  if (!state.challengeId) {
+    toast("No active challenge loaded. Backend endpoint may be unreachable.", "error");
     return;
   }
 
@@ -147,6 +203,15 @@ $("#prompt-input").addEventListener("keydown", (e) => {
     await loadChallenge();
     await loadStats();
   } catch (err) {
+    const targetEndpoint = API_BASE || window.location.origin;
+    $("#challenge-name").textContent = "Backend Offline / Unreachable";
+    $("#challenge-difficulty").textContent = `TARGET: UNREACHABLE · ${targetEndpoint}`;
+    const descEl = $("#challenge-description");
+    if (descEl) {
+      descEl.style.display = "block";
+      descEl.style.color = "var(--crimson, #ff4b4b)";
+      descEl.textContent = `Backend endpoint at ${targetEndpoint} is not currently reachable (${err.message}). Set window.PROMPTFORGE_API_BASE or visit with ?api=<public-backend-url> to connect to a live backend.`;
+    }
     toast(`Backend unavailable: ${err.message}`, "error");
   }
 })();
