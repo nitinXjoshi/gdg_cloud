@@ -35,7 +35,26 @@ function getApiBase() {
   return "";
 }
 
-const API_BASE = getApiBase();
+let API_BASE = getApiBase();
+
+function updateApiEndpointUI() {
+  const label = $("#api-endpoint-label");
+  if (!label) return;
+  if (!API_BASE) {
+    const isLocal =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "0.0.0.0";
+    label.textContent = isLocal ? "Localhost (8000)" : "Default (Relative)";
+  } else {
+    try {
+      const u = new URL(API_BASE);
+      label.textContent = u.host;
+    } catch (_) {
+      label.textContent = API_BASE.replace(/^https?:\/\//, "");
+    }
+  }
+}
 
 const $ = (sel) => document.querySelector(sel);
 let adminKey = localStorage.getItem("promptforge_admin_key") || "";
@@ -152,6 +171,33 @@ function renderEvaluation(result) {
     body.appendChild(tr);
   }
 }
+
+const apiBtn = $("#api-config-btn");
+if (apiBtn) {
+  apiBtn.addEventListener("click", () => {
+    const current = localStorage.getItem("promptforge_api_base") || (API_BASE ? API_BASE : "");
+    const entered = prompt(
+      "Configure PromptForge Backend API URL:\n(e.g. https://api.yourdomain.com or http://localhost:8000)\n\nLeave empty to reset to automatic detection:",
+      current
+    );
+    if (entered === null) return;
+    const clean = entered.trim().replace(/\/+$/, "");
+    if (!clean) {
+      localStorage.removeItem("promptforge_api_base");
+      toast("Reset API endpoint to default", "success");
+    } else {
+      localStorage.setItem("promptforge_api_base", clean);
+      toast(`API endpoint set to: ${clean}`, "success");
+    }
+    API_BASE = getApiBase();
+    updateApiEndpointUI();
+    if (adminKey) {
+      loadAll().catch((err) => toast(`Admin API error: ${err.message}`, "error"));
+    }
+  });
+}
+
+updateApiEndpointUI();
 
 $("#auth-btn").addEventListener("click", authenticate);
 $("#eval-btn").addEventListener("click", runEvaluation);

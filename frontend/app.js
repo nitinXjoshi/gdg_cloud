@@ -35,7 +35,26 @@ function getApiBase() {
   return "";
 }
 
-const API_BASE = getApiBase();
+let API_BASE = getApiBase();
+
+function updateApiEndpointUI() {
+  const label = $("#api-endpoint-label");
+  if (!label) return;
+  if (!API_BASE) {
+    const isLocal =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "0.0.0.0";
+    label.textContent = isLocal ? "Localhost (8000)" : "Default (Relative)";
+  } else {
+    try {
+      const u = new URL(API_BASE);
+      label.textContent = u.host;
+    } catch (_) {
+      label.textContent = API_BASE.replace(/^https?:\/\//, "");
+    }
+  }
+}
 
 const state = {
   token: localStorage.getItem("promptforge_token") || null,
@@ -198,16 +217,73 @@ $("#prompt-input").addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") submitPrompt();
 });
 
-(async function init() {
+const apiBtn = $("#api-config-btn");
+if (apiBtn) {
+  apiBtn.addEventListener("click", () => {
+    const current = localStorage.getItem("promptforge_api_base") || (API_BASE ? API_BASE : "");
+    const entered = prompt(
+      "Configure PromptForge Backend API URL:\n(e.g. https://api.yourdomain.com or http://localhost:8000)\n\nLeave empty to reset to automatic detection:",
+      current
+    );
+    if (entered === null) return;
+    const clean = entered.trim().replace(/\/+$/, "");
+    if (!clean) {
+      localStorage.removeItem("promptforge_api_base");
+      toast("Reset API endpoint to default", "success");
+    } else {
+      localStorage.setItem("promptforge_api_base", clean);
+      toast(`API endpoint set to: ${clean}`, "success");
+    }
+    API_BASE = getApiBase();
+    init();
+  });
+}
+
+async function init() {
+  updateApiEndpointUI();
   try {
     if (state.token) {
       $("#session-badge").textContent = "SESSION ACTIVE";
       $("#session-badge").className = "badge badge-active";
     }
+
+    // Probe live /health endpoint for real backend and Ollama status
+    try {
+      const h = await api("/health");
+      const badge = $("#system-badge");
+      const statusText = $("#system-status-text");
+      if (badge && statusText) {
+        if (h.ollama === "healthy" && h.model === "available") {
+          badge.className = "system-badge";
+          statusText.textContent = `LIVE OLLAMA · ${(h.model_name || "llama3.2:3b").toUpperCase()}`;
+        } else if (h.ollama === "healthy") {
+          badge.className = "system-badge badge-warning";
+          statusText.textContent = `OLLAMA CONNECTED (${(h.model || "no model").toUpperCase()})`;
+        } else {
+          badge.className = "system-badge badge-warning";
+          statusText.textContent = "OLLAMA OFFLINE";
+        }
+      }
+    } catch (_) {
+      // /health failure is handled in outer catch
+    }
+
     await loadChallenge();
     await loadStats();
+
+    const descEl = $("#challenge-description");
+    if (descEl && descEl.style) {
+      descEl.style.color = "";
+      descEl.style.display = "none";
+    }
   } catch (err) {
     const targetEndpoint = API_BASE || window.location.origin;
+    const badge = $("#system-badge");
+    const statusText = $("#system-status-text");
+    if (badge && statusText) {
+      badge.className = "system-badge badge-offline";
+      statusText.textContent = "BACKEND DISCONNECTED";
+    }
     $("#challenge-name").textContent = "Backend Offline / Unreachable";
     $("#challenge-difficulty").textContent = `TARGET: UNREACHABLE · ${targetEndpoint}`;
     const descEl = $("#challenge-description");
@@ -216,8 +292,10 @@ $("#prompt-input").addEventListener("keydown", (e) => {
         descEl.style.display = "block";
         descEl.style.color = "var(--crimson, #ff4b4b)";
       }
-      descEl.textContent = `Backend endpoint at ${targetEndpoint} is not currently reachable (${err.message}). Set window.PROMPTFORGE_API_BASE or visit with ?api=<public-backend-url> to connect to a live backend.`;
+      descEl.textContent = `Backend endpoint at ${targetEndpoint} is not currently reachable (${err.message}). Set window.PROMPTFORGE_API_BASE, visit with ?api=<public-backend-url>, or click the API button above to configure.`;
     }
     toast(`Backend unavailable: ${err.message}`, "error");
   }
-})();
+}
+
+init();

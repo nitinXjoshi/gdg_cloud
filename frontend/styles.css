@@ -116,6 +116,40 @@ body {
   color: var(--cyan);
 }
 
+.system-badge.badge-offline {
+  background: rgba(255, 75, 75, 0.08);
+  border-color: rgba(255, 75, 75, 0.35);
+  color: var(--crimson, #ff4b4b);
+}
+
+.system-badge.badge-offline .pulse-dot {
+  background: var(--crimson, #ff4b4b);
+  box-shadow: 0 0 8px var(--crimson, #ff4b4b);
+}
+
+.system-badge.badge-warning {
+  background: rgba(255, 183, 0, 0.08);
+  border-color: rgba(255, 183, 0, 0.35);
+  color: var(--amber);
+}
+
+.system-badge.badge-warning .pulse-dot {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+}
+
+.api-config-pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.api-config-pill:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
 .pulse-dot {
   width: 7px;
   height: 7px;

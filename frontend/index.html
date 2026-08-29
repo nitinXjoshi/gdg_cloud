@@ -18,10 +18,13 @@
         </div>
       </div>
       <div class="topbar-right">
-        <div class="system-badge">
-          <span class="pulse-dot"></span>
-          <span>LIVE OLLAMA · LLAMA 3.2:3B</span>
+        <div class="system-badge" id="system-badge">
+          <span class="pulse-dot" id="system-pulse-dot"></span>
+          <span id="system-status-text">CONNECTING…</span>
         </div>
+        <button id="api-config-btn" class="btn btn-ghost api-config-pill" title="Configure Backend API URL">
+          <span style="opacity: 0.6;">API:</span> <span id="api-endpoint-label">Auto</span>
+        </button>
         <span id="session-badge" class="badge badge-idle">NO SESSION</span>
         <button id="new-session-btn" class="btn btn-ghost" title="Mint fresh session token">
           Initialize Session

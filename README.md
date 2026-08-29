@@ -376,6 +376,53 @@ docker compose up --build
 
 ---
 
+## Deployment Architecture & Vercel Integration
+
+PromptForge uses a split architecture for deployment:
+
+```
+┌────────────────────────────────────────────────────────┐
+│ DEPLOYED ARCHITECTURE (Vercel + Public Backend)        │
+│                                                        │
+│  [ Vercel CDN Edge ]                                   │
+│  https://gdg-cloud.vercel.app                          │
+│         │                                              │
+│         ▼ (Configurable API Base: ?api=<URL> or UI)    │
+│  [ Public FastAPI Backend ]                            │
+│  https://<public-backend-host>                         │
+│         │                                              │
+│         ▼                                              │
+│  [ Reachable Ollama Server ]                           │
+│  OLLAMA_BASE_URL (llama3.2:3b)                         │
+└────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────┐
+│ LOCAL ARCHITECTURE (All on localhost)                  │
+│                                                        │
+│  Browser (http://localhost:8000)                       │
+│         │                                              │
+│         ▼                                              │
+│  FastAPI (localhost:8000)                              │
+│         │                                              │
+│         ▼                                              │
+│  Local Ollama (http://localhost:11434, llama3.2:3b)    │
+└────────────────────────────────────────────────────────┘
+```
+
+### Key Deployment Characteristics
+1. **Frontend on Vercel**: Deployed statically from `frontend/` via [vercel.json](file:///Users/nitinjoshi/Desktop/GDG%20appl/vercel.json). It provides the complete CTF challenge console, telemetry views, and admin dashboard at [https://gdg-cloud.vercel.app](https://gdg-cloud.vercel.app).
+2. **Ollama Network Reachability**: Vercel edge infrastructure runs in the cloud and cannot directly access `http://localhost:11434` on a private Mac. For the deployed frontend to perform live inference, it connects to a publicly accessible FastAPI backend that can reach an Ollama host.
+3. **Dynamic API Configuration**:
+   - **Local Mode**: When visited at `http://localhost:8000`, the frontend automatically targets the local backend without configuration.
+   - **Deployed Mode**: The backend URL can be supplied dynamically via:
+     - URL parameter: `https://gdg-cloud.vercel.app/?api=https://<public-backend-url>`
+     - The **API** configuration button in the top navigation bar.
+     - Global override: `window.PROMPTFORGE_API_BASE`.
+   - **Connection Diagnostics**: If no public backend is configured, the deployed frontend cleanly reports that the backend endpoint is offline and provides connection instructions rather than failing silently or hanging indefinitely.
+4. **CORS Configuration**: The backend explicitly allows origins configured via `CORS_ORIGINS`, defaulting to `http://localhost:5173,http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000,https://gdg-cloud.vercel.app`.
+
+---
+
 ## Testing
 
 ```bash
