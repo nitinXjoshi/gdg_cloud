@@ -9,7 +9,14 @@ _SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
-    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "connect-src 'self' http://localhost:* http://127.0.0.1:*; "
+        "img-src 'self' data:; "
+        "frame-ancestors 'none'"
+    ),
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 }
 

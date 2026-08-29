@@ -1,4 +1,4 @@
-const API_BASE = window.PROMPTFORGE_API_BASE || "http://localhost:8000";
+const API_BASE = typeof window.PROMPTFORGE_API_BASE === "string" ? window.PROMPTFORGE_API_BASE : "";
 
 const state = {
   token: localStorage.getItem("promptforge_token") || null,
