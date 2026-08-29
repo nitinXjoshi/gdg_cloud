@@ -41,7 +41,7 @@ def test_prompt_construction_layers_with_knowledge():
 
     # 1. Role section
     assert "## A. ROLE & PURPOSE" in prompt
-    assert "GDG Hackathon Assistant" in prompt
+    assert "sinister team" in prompt
     assert "Vault Challenge" in prompt
 
     # 2. Knowledge context section
