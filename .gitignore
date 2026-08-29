@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.coverage_html/
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+*.env
+!.env.example
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Data
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Logs
+*.log
+logs/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Build
+dist/
+build/
+*.egg

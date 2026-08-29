@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PromptForge — Admin</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">◈</span>
+        <div>
+          <h1>PromptForge <span class="admin-tag">Admin</span></h1>
+          <p class="tagline">Security operations &amp; real injection metrics</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <input id="admin-key" type="password" placeholder="Admin API key" class="key-input" />
+        <button id="auth-btn" class="btn btn-primary">Authenticate</button>
+        <a href="/" class="btn btn-ghost">← Challenge</a>
+      </div>
+    </header>
+
+    <section class="section-title"><h3>System status</h3></section>
+    <section id="system-status" class="status-grid">
+      <div class="metric-card"><span class="stat-label">Application</span><span id="st-app" class="metric-value status-pill">—</span></div>
+      <div class="metric-card"><span class="stat-label">PostgreSQL</span><span id="st-db" class="metric-value status-pill">—</span></div>
+      <div class="metric-card"><span class="stat-label">Redis</span><span id="st-redis" class="metric-value status-pill">—</span></div>
+      <div class="metric-card"><span class="stat-label">Ollama</span><span id="st-ollama" class="metric-value status-pill">—</span></div>
+      <div class="metric-card"><span class="stat-label">Model</span><span id="st-model" class="metric-value status-pill">—</span></div>
+      <div class="metric-card"><span class="stat-label">Provider</span><span id="st-provider" class="metric-value">—</span></div>
+    </section>
+
+    <section class="section-title"><h3>Challenge</h3></section>
+    <section id="metrics-section" class="metrics-grid">
+      <div class="metric-card"><span class="stat-label">Active challenge</span><span id="m-challenge" class="metric-value">—</span></div>
+      <div class="metric-card"><span class="stat-label">Participants</span><span id="m-participants" class="metric-value">0</span></div>
+      <div class="metric-card"><span class="stat-label">Total attempts</span><span id="m-attempts" class="metric-value">0</span></div>
+      <div class="metric-card"><span class="stat-label">Successful injections</span><span id="m-solved" class="metric-value">0</span></div>
+      <div class="metric-card"><span class="stat-label">Attack success rate</span><span id="m-rate" class="metric-value">0%</span></div>
+    </section>
+
+    <section class="section-title"><h3>Performance &amp; resource usage</h3></section>
+    <section class="metrics-grid">
+      <div class="metric-card"><span class="stat-label">Avg latency</span><span id="m-avg" class="metric-value">—</span></div>
+      <div class="metric-card"><span class="stat-label">p95 latency</span><span id="m-p95" class="metric-value">—</span></div>
+      <div class="metric-card"><span class="stat-label">Error rate</span><span id="m-error" class="metric-value">0%</span></div>
+      <div class="metric-card"><span class="stat-label">Tokens consumed</span><span id="m-tokens" class="metric-value">Not available</span></div>
+      <div class="metric-card"><span class="stat-label">Runtime</span><span id="m-runtime" class="metric-value">Local</span></div>
+      <div class="metric-card"><span class="stat-label">API cost</span><span id="m-cost" class="metric-value">₹0 / $0</span></div>
+    </section>
+
+    <section class="eval-panel">
+      <div class="eval-header">
+        <div>
+          <h3>Adversarial security evaluation <span class="eval-tag">REAL MODEL</span></h3>
+          <p class="muted">Runs the prompt-injection attack suite against the live Ollama model. Every result comes from a real model response.</p>
+        </div>
+        <button id="eval-btn" class="btn btn-primary">Run security evaluation</button>
+      </div>
+      <div id="eval-status" class="muted"></div>
+      <table class="eval-table" id="eval-table">
+        <thead>
+          <tr><th>Attack category</th><th>Attempts</th><th>Successful</th><th>Success rate</th></tr>
+        </thead>
+        <tbody id="eval-body"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script>
+    window.PROMPTFORGE_API_BASE = "";
+  </script>
+  <script src="/static/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+.admin-tag {
+  font-size: 12px; padding: 3px 8px; border-radius: 6px; margin-left: 8px;
+  background: rgba(244, 63, 94, 0.15); color: var(--danger); vertical-align: middle;
+}
+.eval-tag {
+  font-size: 11px; padding: 2px 8px; border-radius: 6px; margin-left: 8px;
+  background: rgba(52, 211, 153, 0.12); color: var(--success); vertical-align: middle;
+}
+.key-input {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 9px 12px; font-family: var(--mono); font-size: 13px;
+  width: 240px; outline: none;
+}
+.key-input:focus { border-color: var(--accent); }
+
+.section-title { margin: 24px 0 12px; }
+.section-title h3 { margin: 0; font-size: 16px; color: var(--text); }
+
+.status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.metrics-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px; margin-bottom: 8px;
+}
+.metric-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 18px;
+}
+.metric-value { display: block; font-size: 22px; font-weight: 700; font-family: var(--mono); margin-top: 8px; }
+
+.status-pill {
+  font-size: 16px; padding: 2px 10px; border-radius: 8px; display: inline-block; width: auto;
+}
+.status-healthy { background: rgba(52, 211, 153, 0.12); color: var(--success); }
+.status-available { background: rgba(52, 211, 153, 0.12); color: var(--success); }
+.status-unavailable { background: rgba(244, 63, 94, 0.12); color: var(--danger); }
+.status-disabled { background: rgba(251, 191, 36, 0.12); color: var(--warning); }
+
+.eval-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-top: 16px; }
+.eval-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.eval-header h3 { margin: 0 0 4px; }
+
+.eval-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.eval-table th, .eval-table td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--border); }
+.eval-table th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.eval-table td.rate-high { color: var(--danger); font-weight: 600; }
+.eval-table td.rate-low { color: var(--success); font-weight: 600; }
+#eval-status { margin-bottom: 12px; min-height: 18px; }

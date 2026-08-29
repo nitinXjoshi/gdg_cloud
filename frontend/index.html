@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PromptForge — Adversarial LLM Sandbox</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">◈</span>
+        <div>
+          <h1>PromptForge</h1>
+          <p class="tagline">Adversarial LLM Sandbox · Real local model</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span id="session-badge" class="badge badge-idle">No session</span>
+        <button id="new-session-btn" class="btn btn-ghost">New session</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="challenge-panel">
+        <div class="challenge-header">
+          <div>
+            <h2 id="challenge-name">Loading challenge…</h2>
+            <p id="challenge-difficulty" class="muted"></p>
+          </div>
+          <div class="status-chip" id="solved-chip">
+            <span class="dot"></span><span>Unsolved</span>
+          </div>
+        </div>
+        <p id="challenge-description" class="challenge-desc"></p>
+
+        <div class="editor-wrap">
+          <textarea id="prompt-input" placeholder="Type your prompt here… try to break the sandbox." spellcheck="false"></textarea>
+          <div class="editor-toolbar">
+            <span id="char-count" class="muted">0</span>
+            <button id="submit-btn" class="btn btn-primary">Submit prompt</button>
+          </div>
+        </div>
+
+        <div class="response-panel">
+          <div class="panel-title">
+            <span>Model response</span>
+            <span id="latency-label" class="muted"></span>
+          </div>
+          <pre id="response-output" class="response-output">—</pre>
+        </div>
+
+        <details class="request-details">
+          <summary>Request details</summary>
+          <table class="details-table">
+            <tbody>
+              <tr><td>Request ID</td><td id="d-request-id">—</td></tr>
+              <tr><td>Latency</td><td id="d-latency">—</td></tr>
+              <tr><td>Input tokens</td><td id="d-input">Not available</td></tr>
+              <tr><td>Output tokens</td><td id="d-output">Not available</td></tr>
+              <tr><td>Total tokens</td><td id="d-total">Not available</td></tr>
+              <tr><td>Model</td><td id="d-model">—</td></tr>
+              <tr><td>Challenge solved</td><td id="d-solved">—</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </section>
+
+      <aside class="stats-panel">
+        <h3>Live challenge stats</h3>
+        <div class="stat-grid">
+          <div class="stat"><span class="stat-label">Attempts</span><span id="s-attempts" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">Success rate</span><span id="s-rate" class="stat-value">0%</span></div>
+          <div class="stat"><span class="stat-label">Participants</span><span id="s-participants" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">Req/min</span><span id="s-rpm" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">Avg latency</span><span id="s-avg" class="stat-value">—</span></div>
+          <div class="stat"><span class="stat-label">Error rate</span><span id="s-err" class="stat-value">0%</span></div>
+        </div>
+        <a href="/admin" class="btn btn-ghost btn-block">Admin dashboard →</a>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script>
+    window.PROMPTFORGE_API_BASE = "";
+  </script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
