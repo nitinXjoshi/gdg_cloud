@@ -493,235 +493,126 @@ Attack Prompt ──> Real Ollama (llama3.2:3b) ──> Real Response ──> Se
 
 ---
 
-## 🚀 Comprehensive Deployment Guide
+## 🚀 Final Production Architecture & Deployment
 
-PromptForge is designed with a high-performance split architecture:
-- **Frontend**: Static, blazing-fast edge delivery hosted on Vercel CDN ([https://gdg-cloud.vercel.app](https://gdg-cloud.vercel.app)).
-- **Backend**: Deterministic FastAPI API gateway providing authentication, sliding-window rate limiting, semaphore concurrency control, and prompt assembly.
-- **Inference Engine**: Local/on-premise Ollama instance (`llama3.2:3b`) running on host hardware or cloud GPU instances for ₹0 / $0 API cost.
+PromptForge delivers a seamless, zero-configuration participant experience via **[https://gdg-cloud.vercel.app](https://gdg-cloud.vercel.app)**.
+
+### Target Architecture
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│ PROMPTFORGE DEPLOYED TOPOLOGY                                          │
-│                                                                        │
-│  [ Vercel CDN Edge ]                                                   │
-│  https://gdg-cloud.vercel.app (Clean URLs, Global Edge Cache)          │
-│         │                                                              │
-│         ▼ (Configurable API Base: ?api=<URL> or Topbar 'API' Button)   │
-│  [ FastAPI Application Server ]                                        │
-│  Public HTTPS Endpoint (Cloud VPS, Docker Container, or Secure Tunnel) │
-│         │                                                              │
-│         ▼ Async HTTP POST /api/chat                                    │
-│  [ Ollama Server ]                                                     │
-│  http://localhost:11434 (llama3.2:3b — 100% Free Local Inference)     │
-└────────────────────────────────────────────────────────────────────────┘
+                    Browser / Evaluator
+                            │
+                            ▼
+              https://gdg-cloud.vercel.app
+                            │
+            ┌───────────────┴───────────────┐
+            ▼                               ▼
+Vercel Edge Static CDN             Vercel Serverless Gateway
+  (index.html, CSS, JS)               (/health, /api/v1/*)
+                                            │
+                                            ▼
+                                   FastAPI Application
+                                (Auth, Rate Limiting, Prompts)
+                                            │
+                      ┌─────────────────────┴─────────────────────┐
+                      ▼                                           ▼
+             Remote Cloud Ollama                         PostgreSQL & Redis
+         (OLLAMA_BASE_URL, llama3.2:3b)                  (DATABASE_URL, REDIS_URL)
+                      │
+                      ▼
+               SecretDetector
+         (Constant-time flag match)
 ```
+
+### The Participant Experience (Zero Configuration)
+
+1. **Open the URL**: Navigate to `https://gdg-cloud.vercel.app`.
+2. **Automatic Session Minting**: The application automatically calls `POST /api/v1/auth/session` on initial load and securely stores the temporary bearer token.
+3. **Challenge Loads Automatically**: The challenge metadata and live telemetry load without any manual intervention.
+4. **Enter Prompt**: The participant writes prompt-injection attacks directly in the Attack Console and presses **Send Attack**.
+5. **Real Model Responds**: The server executes inference against the **real `llama3.2:3b` model** and returns the response with real-time breach detection and token usage.
+
+The participant **never** configures an API URL, enters an API key, or touches any backend credentials.
 
 ---
 
-### Track 1: Deploying the Frontend to Vercel (Edge CDN)
+### Behind the Scenes: Infrastructure & Security
 
-The frontend is fully configured for Vercel through the root [vercel.json](file:///Users/nitinjoshi/Desktop/GDG%20appl/vercel.json), which establishes static routing, clean URLs, and rewrites (`/admin` $\rightarrow$ `/admin.html`).
-
-#### Method A: Deploy via Vercel CLI
-```bash
-# 1. Install Vercel CLI globally
-npm install -g vercel
-
-# 2. Authenticate
-vercel login
-
-# 3. Deploy to production from repository root
-vercel --prod
-```
-
-#### Method B: Deploy via GitHub Integration
-1. Push your repository to GitHub: `git push origin main`.
-2. Open the [Vercel Dashboard](https://vercel.com/dashboard) and click **Add New Project**.
-3. Import the `gdg_cloud` repository.
-4. Keep the Framework Preset as **Other**.
-5. Set **Root Directory** to `./`.
-6. Click **Deploy**. Vercel will build and serve the static files from `frontend/` as declared in `vercel.json`.
-7. **Production URL**: [https://gdg-cloud.vercel.app](https://gdg-cloud.vercel.app)
-
----
-
-### Track 2: Live Hackathon / Evaluation Demo Flow (Recommended)
-
-This track is the **fastest and most cost-effective deployment method** for live evaluator reviews, hackathon demonstrations, and local development. You keep the Ollama inference engine and FastAPI backend running on your own machine (leveraging local hardware acceleration and ₹0 cloud spend), while connecting seamlessly to the production Vercel edge frontend:
-
-```
-[ Evaluator / Browser ] ──> [ Vercel Edge Frontend ] ──> [ Cloudflare HTTPS Tunnel ] ──> [ Local FastAPI ] ──> [ Local Ollama (llama3.2:3b) ]
-```
-
-#### Step 1: Start Ollama on Your Host
-```bash
-# Start Ollama service
-ollama serve
-
-# Pull the model
-ollama pull llama3.2:3b
-```
-
-#### Step 2: Start the FastAPI Backend Locally
-```bash
-cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# Run migrations (initializes SQLite DB for local testing)
-alembic upgrade head
-
-# Launch server
-uvicorn app.main:app --port 8000
-```
-
-#### Step 3: Expose FastAPI via a Secure HTTPS Tunnel
-Open a separate terminal window and create an HTTPS tunnel pointing to port 8000:
-
-- **Using Cloudflare Quick Tunnel** (Free, no account or installation sign-up required):
-  ```bash
-  # macOS
-  brew install cloudflared
-  # Linux
-  sudo apt-get install cloudflared
-
-  # Run quick tunnel
-  cloudflared tunnel --url http://localhost:8000
-  ```
-  *Copy the generated tunnel URL (e.g. `https://sparkling-random-subdomain.trycloudflare.com`).*
-
-- **Alternative: Using ngrok**:
-  ```bash
-  ngrok http 8000
-  ```
-
-#### Step 4: Open the Production Vercel App
-Open the deployed frontend with your tunnel URL in the `?api=` parameter:
-```text
-https://gdg-cloud.vercel.app/?api=https://sparkling-random-subdomain.trycloudflare.com
-```
-
-*(You can also simply visit [https://gdg-cloud.vercel.app](https://gdg-cloud.vercel.app), click the **API** button in the header, paste your tunnel URL, and click **Save**).*
-
-The Vercel app will immediately ping your backend, verify the Ollama gateway, turn the connection dot **green (ONLINE)**, and enable full live inference!
-
----
-
-### Track 3: Full Cloud VPS Deployment (Docker + Ollama on Ubuntu VM)
-
-For a fully remote 24/7 deployment without needing a personal laptop online, deploy to any cloud Linux VM (AWS EC2, GCP Compute Engine, Hetzner, or RunPod GPU):
-
-#### Step 1: Provision Cloud VM & Install Dependencies
-```bash
-# Connect to your VM (Ubuntu 22.04 LTS / 24.04 LTS recommended)
-ssh user@your-server-ip
-
-# Install Docker, Docker Compose, and Ollama
-sudo apt update && sudo apt install -y docker.io docker-compose curl
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# Start Ollama and download model
-sudo systemctl enable --now ollama
-ollama pull llama3.2:3b
-```
-
-#### Step 2: Clone Codebase & Configure Production Environment
-```bash
-git clone https://github.com/nitinXjoshi/gdg_cloud.git
-cd gdg_cloud
-cp backend/.env.example .env
-```
-
-Edit `.env` to configure your domain and credentials:
-```env
-ENVIRONMENT=production
-LLM_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.2:3b
-DATABASE_URL=postgresql+asyncpg://promptforge:promptforge@postgres:5432/promptforge
-REDIS_URL=redis://redis:6379/0
-ADMIN_API_KEY=your-strong-production-admin-key
-CORS_ORIGINS=https://gdg-cloud.vercel.app,http://localhost:8000
-MAX_PROMPT_LENGTH=12000
-MAX_OUTPUT_TOKENS=1024
-MAX_REQUESTS_PER_MINUTE=20
-```
-
-#### Step 3: Run the Services with Docker Compose
-```bash
-docker compose up -d --build
-```
-
-#### Step 4: Setup Nginx Reverse Proxy with HTTPS
-```bash
-sudo apt install -y nginx certbot python3-certbot-nginx
-```
-
-Configure `/etc/nginx/sites-available/promptforge`:
-```nginx
-server {
-    server_name api.yourdomain.com;
-
-    location / {
-        proxy_pass http://localhost:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Enable site and generate free SSL:
-```bash
-sudo ln -s /etc/nginx/sites-available/promptforge /etc/nginx/sites-enabled/
-sudo certbot --nginx -d api.yourdomain.com
-```
-
-Your cloud backend is now permanently available to the Vercel frontend at:
-`https://gdg-cloud.vercel.app/?api=https://api.yourdomain.com`
-
----
-
-### Track 4: Fully Containerized Local Stack (Docker Compose)
-
-To spin up the entire application locally including PostgreSQL 16 and Redis 7 in containers:
-
-```bash
-# 1. Start Ollama on host
-ollama serve && ollama pull llama3.2:3b
-
-# 2. Launch Docker Compose stack
-cp backend/.env.example .env
-docker compose up --build
-```
-
-- **Local Challenge UI**: [http://localhost:8000](http://localhost:8000)
-- **Local Admin Dashboard**: [http://localhost:8000/admin](http://localhost:8000/admin) *(Key: `dev-admin-key-change-me`)*
-- **API Swagger Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Live Health Diagnostics**: [http://localhost:8000/health](http://localhost:8000/health)
-
-*(The backend Docker container communicates with host Ollama via `host.docker.internal:11434`)*.
+- **Serverless & Same-Origin Routing**: The production frontend communicates via same-origin relative paths (`/health`, `/api/v1/*`). All requests are routed through Vercel's Edge CDN and Serverless Functions (`api/index.py` configured with `maxDuration: 60` seconds to accommodate deep model reasoning).
+- **Zero Secrets in Browser**:
+  - `OLLAMA_BASE_URL` is configured exclusively as a **server-side** environment variable.
+  - `DATABASE_URL` and `REDIS_URL` are strictly server-side.
+  - `ADMIN_API_KEY` protects administrative endpoints (`/api/v1/admin/*`) and is never delivered to or embedded in the client.
+  - The runtime flag (`TVIT{...}`) is generated dynamically in server memory and is never logged, persisted in the database, or committed.
+  - Public endpoints like `/health` redact all backend infrastructure URLs.
+- **Production Database**: Configured via `DATABASE_URL` using remote PostgreSQL (e.g. Supabase, Neon, AWS RDS, Railway).
+- **Production Redis**: Configured via `REDIS_URL` for distributed sliding-window rate limiting.
 
 ---
 
 ### Environment Variables Reference
 
-| Variable | Default Value | Description |
-|---|---|---|
-| `ENVIRONMENT` | `development` | Runtime environment (`development`, `production`, `test`) |
-| `LLM_PROVIDER` | `ollama` | Provider implementation (`ollama` for live model, `mock` for unit tests) |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Network address of the Ollama inference server |
-| `OLLAMA_MODEL` | `llama3.2:3b` | Local Ollama model tag |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./promptforge.db` | Async SQLAlchemy database URL (SQLite or PostgreSQL) |
-| `REDIS_URL` | `""` | Redis connection URL for distributed rate limiting (falls back to memory if empty) |
-| `ADMIN_API_KEY` | `dev-admin-key-12345` | Master key protecting `/api/v1/admin/*` endpoints and `/admin.html` |
-| `CORS_ORIGINS` | `http://localhost:8000,https://gdg-cloud.vercel.app` | Comma-separated allowed origins (regex also allows `*.vercel.app`) |
-| `MAX_PROMPT_LENGTH` | `12000` | Hard cap on input prompt character length to mitigate DoS |
-| `MAX_OUTPUT_TOKENS` | `1024` | Maximum tokens requested per inference generation |
-| `MAX_REQUESTS_PER_MINUTE` | `20` | Sliding window rate limit per participant Bearer token |
+#### 🔒 Server-Only Environment Variables (Private)
+*Never exposed to the browser, never committed to git, never prefixed with `PUBLIC_` or `VITE_`.*
+
+| Variable | Required in Prod | Default (Dev) | Description |
+|---|---|---|---|
+| `OLLAMA_BASE_URL` | **Yes** (Cloud Ollama) | `http://localhost:11434` | Remote Cloud Ollama HTTP endpoint hosting `llama3.2:3b`. |
+| `OLLAMA_MODEL` | Optional | `llama3.2:3b` | Model tag on the remote Ollama host. |
+| `OLLAMA_TIMEOUT_SECONDS` | Optional | `120.0` | Client timeout for inference requests (55s on serverless). |
+| `DATABASE_URL` | **Yes** (PostgreSQL) | SQLite (`promptforge.db`) | PostgreSQL connection string (`postgresql+asyncpg://...`). |
+| `REDIS_URL` | Optional | In-Memory Limiter | Redis connection string (`rediss://...`) for distributed rate limiting. |
+| `ADMIN_API_KEY` | **Yes** | Auto-generated | Secret key for administrative endpoints and evaluations. |
+| `ENVIRONMENT` | Optional | `development` | Set to `production` for production deployments. |
+| `CORS_ORIGINS` | Optional | Localhost + Vercel | Comma-separated list of allowed origins. |
+
+#### 🌐 Client-Safe / Public Variables
+**None required.** The frontend relies exclusively on same-origin requests (`/health`, `/api/v1/*`).
+
+---
+
+### Deployment Tracks
+
+#### Track 1: Deploy to Vercel (Recommended)
+1. Push to GitHub: `git push origin main`.
+2. In the Vercel Dashboard, import the repository.
+3. Configure the **Server-Side Environment Variables** in Project Settings $\rightarrow$ Environment Variables:
+   - `OLLAMA_BASE_URL`: `<your-remote-cloud-ollama-url>`
+   - `DATABASE_URL`: `<your-remote-postgresql-url>`
+   - `REDIS_URL`: `<your-remote-redis-url>` (optional)
+   - `ADMIN_API_KEY`: `<your-strong-secret-key>`
+   - `ENVIRONMENT`: `production`
+4. Deploy. Vercel automatically deploys static assets from `public/` and the FastAPI serverless gateway from `api/index.py`.
+
+#### Track 2: Dedicated Container Backend with Vercel Edge Proxy
+If running on a dedicated cloud host (Render, Railway, Fly.io, or VPS) with continuous background processes:
+1. Deploy the FastAPI backend using `backend/Dockerfile` or `docker-compose.yml`.
+2. In `vercel.json`, route API traffic to the dedicated backend:
+   ```json
+   {
+     "rewrites": [
+       { "source": "/static/:path*", "destination": "/:path*" },
+       { "source": "/admin", "destination": "/admin.html" },
+       { "source": "/health", "destination": "https://api.yourdomain.com/health" },
+       { "source": "/api/:path*", "destination": "https://api.yourdomain.com/api/:path*" }
+     ]
+   }
+   ```
+3. The participant continues opening `https://gdg-cloud.vercel.app` with zero configuration.
+
+#### Track 3: Local Development (Offline Mode)
+Local development operates identically with zero cloud dependencies:
+```bash
+# 1. Start local Ollama
+ollama serve && ollama pull llama3.2:3b
+
+# 2. Start local FastAPI backend
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app --port 8000
+```
+- Open [http://localhost:8000](http://localhost:8000) (auto-detects local backend, auto-mints session, connects to local Ollama).
+
 
 ---
 

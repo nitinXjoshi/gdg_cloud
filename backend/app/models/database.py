@@ -26,11 +26,21 @@ def _default_database_url() -> str:
     return "sqlite+aiosqlite:///./promptforge.db"
 
 
+def _normalize_database_url(url: str) -> str:
+    """Ensure PostgreSQL URLs use the asyncpg dialect driver."""
+    if url.startswith("postgres://"):
+        return "postgresql+asyncpg://" + url[len("postgres://") :]
+    if url.startswith("postgresql://") and not url.startswith("postgresql+"):
+        return "postgresql+asyncpg://" + url[len("postgresql://") :]
+    return url
+
+
 def init_database(settings: Settings | None = None) -> None:
     """Create the async engine and session factory."""
     global _engine, _session_factory
 
-    url = (settings.database_url if settings else None) or _default_database_url()
+    raw_url = (settings.database_url if settings else None) or _default_database_url()
+    url = _normalize_database_url(raw_url)
     connect_args = {}
     if url.startswith("sqlite"):
         connect_args = {"check_same_thread": False}

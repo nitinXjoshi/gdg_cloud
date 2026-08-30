@@ -25,6 +25,14 @@ async def test_health_endpoint_returns_real_structure(client):
     assert "model_name" in data
     assert "version" in data
 
+    # Must NEVER expose private server-side URLs, credentials, or keys
+    assert "ollama_base_url" not in data
+    assert "database_url" not in data
+    assert "redis_url" not in data
+    assert "admin_api_key" not in data
+    assert "secret" not in data
+    assert "flag" not in data
+
 
 @pytest.mark.asyncio
 async def test_check_database_healthy(client):

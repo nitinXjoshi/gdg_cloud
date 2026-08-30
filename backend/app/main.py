@@ -32,13 +32,18 @@ from app.services.llm.factory import get_provider
 
 
 def _find_frontend_dir() -> Path:
-    p2 = Path(__file__).resolve().parents[2] / "frontend"
-    if p2.is_dir():
-        return p2
-    p1 = Path(__file__).resolve().parents[1] / "frontend"
-    if p1.is_dir():
-        return p1
-    return p2
+    candidates = [
+        Path(__file__).resolve().parents[2] / "frontend",
+        Path(__file__).resolve().parents[2] / "public",
+        Path(__file__).resolve().parents[1] / "frontend",
+        Path(__file__).resolve().parents[1] / "public",
+        Path("frontend").resolve(),
+        Path("public").resolve(),
+    ]
+    for c in candidates:
+        if c.is_dir():
+            return c
+    return candidates[0]
 
 
 _FRONTEND_DIR = _find_frontend_dir()
@@ -51,13 +56,34 @@ async def lifespan(app: FastAPI):
     configure_logging("DEBUG" if settings.is_dev else "INFO")
 
     init_database(settings)
-    if settings.database_url and settings.database_url.startswith("postgresql"):
+    if settings.database_url and (
+        "postgresql" in settings.database_url or "postgres" in settings.database_url
+    ):
         # Production path: apply versioned migrations against PostgreSQL.
-        from alembic import command
-        from alembic.config import Config as AlembicConfig
+        try:
+            from alembic import command
+            from alembic.config import Config as AlembicConfig
 
-        alembic_cfg = AlembicConfig("alembic.ini")
-        command.upgrade(alembic_cfg, "head")
+            alembic_ini_path = Path(__file__).resolve().parents[1] / "alembic.ini"
+            if not alembic_ini_path.is_file():
+                alembic_ini_path = Path("backend/alembic.ini").resolve()
+            if not alembic_ini_path.is_file():
+                alembic_ini_path = Path("alembic.ini").resolve()
+
+            if alembic_ini_path.is_file():
+                alembic_cfg = AlembicConfig(str(alembic_ini_path))
+                migrations_dir = alembic_ini_path.parent / "migrations"
+                if migrations_dir.is_dir():
+                    alembic_cfg.set_main_option("script_location", str(migrations_dir))
+                command.upgrade(alembic_cfg, "head")
+            else:
+                await create_all()
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                "alembic migration notice (ensuring tables via create_all)",
+                extra={"error": str(e)},
+            )
+            await create_all()
     else:
         # Local development/test: SQLite via create_all for convenience.
         await create_all()

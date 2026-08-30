@@ -1,7 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "frontend",
   "cleanUrls": true,
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "rewrites": [
     {
       "source": "/static/:path*",
@@ -10,6 +15,14 @@
     {
       "source": "/admin",
       "destination": "/admin.html"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.py"
     }
   ]
 }

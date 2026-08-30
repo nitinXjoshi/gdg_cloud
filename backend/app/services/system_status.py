@@ -73,6 +73,5 @@ class SystemStatus:
             "ollama": ollama_status,
             "model": model_status,
             "model_name": settings.ollama_model,
-            "ollama_base_url": settings.ollama_base_url,
             "version": "1.1.0",
         }

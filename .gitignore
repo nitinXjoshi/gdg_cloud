@@ -46,3 +46,7 @@ frontend/.vite/
 dist/
 build/
 *.egg
+
+# Media
+*.mp4
+*.mov
