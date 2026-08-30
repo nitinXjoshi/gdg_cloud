@@ -18,11 +18,11 @@
     },
     {
       "source": "/health",
-      "destination": "/api/index.py"
+      "destination": "/api/index"
     },
     {
       "source": "/api/:path*",
-      "destination": "/api/index.py"
+      "destination": "/api/index"
     }
   ]
 }
