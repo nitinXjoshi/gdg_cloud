@@ -4,7 +4,8 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 1024,
+      "includeFiles": "backend/**/*.md"
     }
   },
   "rewrites": [
