@@ -23,6 +23,9 @@ _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 
 def _default_database_url() -> str:
+    import os
+    if os.environ.get("VERCEL"):
+        return "sqlite+aiosqlite:////tmp/promptforge.db"
     return "sqlite+aiosqlite:///./promptforge.db"
 
 
