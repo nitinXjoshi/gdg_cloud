@@ -71,13 +71,13 @@ async def test_admin_metrics_does_not_expose_knowledge(client):
 
 
 def test_frontend_directory_contains_no_knowledge_file():
-    frontend_dir = Path(__file__).resolve().parents[2] / "frontend"
-    assert frontend_dir.is_dir()
+    public_dir = Path(__file__).resolve().parents[2] / "public"
+    assert public_dir.is_dir()
 
-    # Recursively check that no .md files or knowledge files exist in frontend
-    md_files = list(frontend_dir.rglob("*.md"))
+    # Recursively check that no .md files or knowledge files exist in public
+    md_files = list(public_dir.rglob("*.md"))
     assert len(md_files) == 0
-    assert not (frontend_dir / "HACKATHON_INTELLIGENCE.md").exists()
+    assert not (public_dir / "HACKATHON_INTELLIGENCE.md").exists()
 
 
 @pytest.mark.asyncio

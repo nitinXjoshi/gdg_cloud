@@ -24,6 +24,7 @@ _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 def _default_database_url() -> str:
     import os
+
     if os.environ.get("VERCEL"):
         return "sqlite+aiosqlite:////tmp/promptforge.db"
     return "sqlite+aiosqlite:///./promptforge.db"
@@ -47,6 +48,8 @@ def init_database(settings: Settings | None = None) -> None:
     connect_args = {}
     if url.startswith("sqlite"):
         connect_args = {"check_same_thread": False}
+    elif url.startswith("postgresql"):
+        connect_args = {"command_timeout": 5, "timeout": 5}
 
     _engine = create_async_engine(url, echo=False, pool_pre_ping=True, connect_args=connect_args)
     _session_factory = async_sessionmaker(_engine, expire_on_commit=False, class_=AsyncSession)
